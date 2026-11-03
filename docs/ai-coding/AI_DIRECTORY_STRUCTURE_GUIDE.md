@@ -4,7 +4,7 @@
 
 ```text
 src/main/java/com/kellen/
-  ApiApplication.java
+  AiMemoryApplication.java
   bean/
   memory/
     controller/
