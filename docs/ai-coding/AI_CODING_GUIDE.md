@@ -1,5 +1,9 @@
 # AI 编码执行指南
 
+## 通用修改入口
+
+先按根 `AGENTS.md`、`BRANCHING_SPEC.md` 核对仓库、WIP、最新 main 与任务授权；版本按 `VERSIONING_SPEC.md` 做进位和占用检查。main/test/preprod 的集成证据、远端核对、短分支清理与 worktree 保护分别记录；纯文档不重复跑 Java 测试或额外提升制品版本。
+
 ## 执行顺序
 
 当用户要求新增或修改 `ai-memory` 功能时，AI 应按以下顺序工作：
