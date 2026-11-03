@@ -115,3 +115,5 @@ bash scripts/check-secrets.sh
 ```
 
 如果依赖 `utils` 或 `rpc-api` 有调整，先在同级项目执行 `./gradlew publishToMavenLocal`，再回到本项目编译。
+
+通用安全、隔离与本批验证边界见 [安全与架构说明](docs/security-architecture-sync.md)。

@@ -207,6 +207,7 @@ public class DefaultMemoryRetrievalService implements MemoryRetrievalService {
                             List<String> hitSources,
                             String contextText) {
         MemoryRetrievalEvalEntity eval = new MemoryRetrievalEvalEntity();
+        eval.setTenantId(textPolicy.text(request.getTenantId()));
         eval.setTraceId(textPolicy.text(request.getTraceId()));
         eval.setCaller(textPolicy.text(request.getCaller()));
         eval.setPurpose(textPolicy.text(request.getPurpose()));

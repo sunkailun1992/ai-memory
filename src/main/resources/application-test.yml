@@ -1,10 +1,9 @@
-# test 环境负责声明 Nacos 入口和远程配置 import；业务配置继续放 Nacos test namespace / DEFAULT_GROUP。
-# 当前 dev/test/prod 暂时共用同一套 Nacos 地址和 namespace，后期可通过 NACOS_TEST_* 单独覆盖。
+# GitHub test 独立环境；禁止回落到公司 dev namespace。
 custom:
-  nacos-ip: ${NACOS_TEST_SERVER_ADDR:${NACOS_SERVER_ADDR:43.143.97.166:8848}}
-  namespace: ${NACOS_TEST_NAMESPACE:${NACOS_NAMESPACE:cfbf4c42-5ebb-4566-a095-30a568556a85}}
-  nacos-username: ${NACOS_TEST_USERNAME:${NACOS_USERNAME:nacos}}
-  nacos-password: ${NACOS_TEST_PASSWORD:${NACOS_PASSWORD:}}
+  nacos-ip: ${GITHUB_NACOS_TEST_SERVER_ADDR:${GITHUB_NACOS_SERVER_ADDR:127.0.0.1:8848}}
+  namespace: ${GITHUB_NACOS_TEST_NAMESPACE:github-test}
+  nacos-username: ${GITHUB_NACOS_USERNAME:}
+  nacos-password: ${GITHUB_NACOS_PASSWORD:}
 
 spring:
   cloud:
@@ -33,6 +32,8 @@ spring:
       - "optional:nacos:reuse-configuration.yaml?refreshEnabled=true"
       # traffic-governance.yaml：灰度、版本、流量治理等跨服务公共规则。
       - "optional:nacos:traffic-governance.yaml?refreshEnabled=true"
+      - "nacos:actuator.yaml?refreshEnabled=true"
+      - "nacos:security-jwt.yaml?refreshEnabled=true"
       # security-auth.yaml：认证、鉴权、Token 和安全过滤公共配置。
       - "optional:nacos:security-auth.yaml?refreshEnabled=true"
       # swagger.yaml：OpenAPI/Swagger 展示公共开关与分组配置。

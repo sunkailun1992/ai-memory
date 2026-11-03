@@ -1,5 +1,7 @@
 # Nacos 配置中心规范
 
+> GitHub 个人环境现行覆盖：namespace 固定独立为 `github-dev/github-test/github-prod`；只使用 `GITHUB_NACOS_*` 引导变量，不回落公司 dev。通用模板与私有 CAS 发布见同级 `utils/ops/github-dev/README.md`。本轮不复制公司业务 dataId。
+
 ## dataId
 
 `ai-memory` 使用 Spring Cloud Alibaba `spring.config.import` 导入远程配置。
