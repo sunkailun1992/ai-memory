@@ -5,6 +5,8 @@ import com.kellen.memory.entity.MemoryVectorTaskEntity;
 import com.kellen.memory.entity.enums.MemoryVectorTaskStatusEnum;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.time.LocalDateTime;
+
 /**
  * 向量索引任务 Mapper。
  */
@@ -15,6 +17,7 @@ public interface MemoryVectorTaskMapper extends MemoryBaseMapper<MemoryVectorTas
         update(null, new UpdateWrapper<MemoryVectorTaskEntity>()
                 .eq("memory_id", memoryId)
                 .eq("status", MemoryVectorTaskStatusEnum.PENDING.code())
+                .set("modify_date_time", LocalDateTime.now())
                 .set("status", MemoryVectorTaskStatusEnum.CANCELLED.code()));
     }
 }

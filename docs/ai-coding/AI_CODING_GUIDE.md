@@ -14,7 +14,7 @@
 4. 如涉及跨服务契约，先检查同级 `../rpc-api`，缺失时先设计契约，再改 provider/consumer。
 5. 如涉及公共工具、认证上下文、多租户、错误码或中间件封装，先检查同级 `../utils`。
 6. 新增 Controller 时使用 RESTful 资源路径，补齐 `@Tag`、`@Operation` 和请求/响应 `@Schema`。
-7. 新增 DDL 前检查 `MysqlDdl#getSqlFiles()` 和目标库 `ddl_history`；已执行或无法确认执行状态的脚本禁止原地修改。
+7. 新增 DDL 前检查 `PostgresqlDdl#getSqlFiles()` 和目标库 `ddl_history`；已执行或无法确认执行状态的脚本禁止原地修改。
 8. 新增记忆读写逻辑时同步补测试，至少覆盖授权、租户隔离、患者隔离、删除/归档状态和失败降级。
 9. 更新 README 或 AI 规范，确保后续 AI 能识别新边界。
 10. 编译、测试、密钥扫描，并在交付说明中列出验证命令和未验证项。
@@ -66,3 +66,5 @@ bash scripts/check-secrets.sh
 ```bash
 ./gradlew publishToMavenLocal
 ```
+
+个人 XXL-JOB 已退役，不再新增其依赖、配置类或 `xxl-job.yaml` 导入。调度选用 NAS 独立 Conductor OSS，通过 REST 接入；业务 Java 调度接口尚未实现，保持 Java 17，不为此引入要求 Java 21 的最新 SDK。

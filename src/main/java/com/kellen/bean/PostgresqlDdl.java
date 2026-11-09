@@ -8,15 +8,15 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * MyBatis-Plus自动维护DDL。
+ * MyBatis-Plus 自动维护 PostgreSQL DDL。
  * <p>
  * ai-memory 自动维护记忆业务表和 Seata undo_log 等启动必需表。
  *
  * @author sunkailun
- * @className MysqlDdl
+ * @className PostgresqlDdl
  */
 @Component
-public class MysqlDdl implements IDdl {
+public class PostgresqlDdl implements IDdl {
 
     /**
      * 当前项目数据源。
@@ -30,7 +30,7 @@ public class MysqlDdl implements IDdl {
      * @return void
      * @author sunkailun
      */
-    public MysqlDdl(DataSource dataSource) {
+    public PostgresqlDdl(DataSource dataSource) {
         this.dataSource = dataSource; // 保存当前应用数据源，交给MyBatis-Plus DDL运行器执行脚本。
     }
 
@@ -54,6 +54,9 @@ public class MysqlDdl implements IDdl {
      */
     @Override
     public List<String> getSqlFiles() {
-        return List.of("db/ai-memory-init.sql");
+        return List.of(
+                "db/postgresql/common-infra-schema.sql",
+                "db/postgresql/ai-memory-schema.sql"
+        );
     }
 }

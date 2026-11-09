@@ -23,8 +23,8 @@
 - 项目名称：`ai-memory`
 - 项目类型：AI 记忆服务后端，为 `ai`、`ai-agent` 和后续中台智能体统一提供短期记忆、长期记忆、召回、候选写入、删除、归档、脱敏、授权和审计能力。
 - 技术栈：Java 17、Spring Boot 4、Spring Cloud Alibaba、Nacos、Dubbo、MyBatis-Plus、Gradle、`com:utils`、`com:rpc-api`。
-- 后续中间件：MySQL 权威存储、Redis 缓存/锁、Qdrant 长期记忆派生语义索引、RabbitMQ/XXL-JOB 异步索引和归档任务。
-- Utils 制品隔离：本 GitHub 个人项目固定使用 `com:utils:1.5.3`；公司项目使用 `com.kellen:utils`。二者共用私有 Maven 地址，以 group 区分制品；Java 包名 `com.kellen.*` 不随 Maven group 改动。
+- 后续中间件：PostgreSQL 权威存储、Redis 缓存/锁、Qdrant 长期记忆派生语义索引、RabbitMQ 异步索引；Conductor OSS 独立任务编排（业务 REST 接入另行验收）。
+- Utils 制品隔离：本 GitHub 个人项目固定使用 `com:utils:1.6.0`；公司项目使用 `com.kellen:utils`。二者共用私有 Maven 地址，以 group 区分制品；Java 包名 `com.kellen.*` 不随 Maven group 改动。
 - 同级依赖：`../rpc-api` 提供跨服务 RPC 接口和 DTO 契约；`../utils` 提供公共响应、认证上下文、租户、多数据源和基础工具；`../ai` 是业务入口；`../ai-agent` 是模型执行层；`../rag` 是公共知识检索服务。
 - 当前状态：从现有微服务工程骨架复制初始化，已保留基础工程、配置入口、CI、脚本和 AI 编码规范；真实记忆表、RPC 契约、Qdrant 索引和 ai-agent 直连调用尚未实现。
 
@@ -49,7 +49,7 @@
 - `ai-memory` 不推进问卷状态；`ai_questionnaire_session` 和 `ai_questionnaire_answer` 属于 `ai`。
 - `ai-memory` 不做模型推理；模型调用、Prompt 组织和结构化输出属于 `ai-agent`。
 - `ai-memory` 不做公共知识库 RAG；医学指南、FAQ、文档切片和知识库语义检索属于 `rag`。
-- MySQL 是记忆权威库；Qdrant 只是长期记忆派生索引；Redis 只是缓存和锁。
+- PostgreSQL 是记忆权威库；Qdrant 只是长期记忆派生索引；Redis 只是缓存和锁。
 - 短记忆必须保持时序，采用会话窗口 + 滚动摘要，不用 Qdrant 做主存。
 - 长记忆按 `patientId + sourceTenantId` 隔离；召回必须带用途、调用方、授权上下文和 token/条数上限。
 
@@ -72,7 +72,7 @@ bash scripts/check-secrets.sh
 
 ## 禁止事项
 
-- 禁止 `ai-agent` 直连记忆 MySQL 或 Qdrant 绕过 `ai-memory`。
+- 禁止 `ai-agent` 直连记忆 PostgreSQL 或 Qdrant 绕过 `ai-memory`。
 - 禁止把 Qdrant 当作长期记忆唯一存储。
 - 禁止用 Qdrant 存短期会话主记忆。
 - 禁止把患者长期记忆放入 `rag` 公共知识库。
