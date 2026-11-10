@@ -85,20 +85,28 @@ HTTP 接口用于联调和管理后台，服务间调用优先使用 `rpc-api` �
 
 ## Nacos 配置
 
-本地 profile 文件只保存连接 Nacos 的启动入口和 `spring.config.import` 列表。当前 `ai-memory` 预留：
+本地 profile 文件只保存连接 Nacos 的启动入口和 `spring.config.import` 列表。当前 `ai-memory` 加载（顺序见三个 profile）：
 
 ```text
-ai-memory.yaml
+logging.yml
+reuse-configuration.yaml
+traffic-governance.yaml
+actuator.yaml
+security-jwt.yaml
+security-auth.yaml
+swagger.yaml
 ai-memory-spring.yaml
 qdrant.yaml
+mybatis-plus.yaml
 redis.yaml
 rabbitmq.yaml
-mybatis-plus.yaml
-security-auth.yaml
+elasticsearch.yaml
+seata.yaml
 dubbo.yaml
+a2a.yaml
 ```
 
-真实密钥、数据库密码、模型 Key、Qdrant 密钥只放 Nacos 或环境变量，不进入仓库。
+`1.1.3` 移除三个 profile 对 `ai-model-secrets.yaml` 的导入。记忆服务不执行模型推理，其运行依赖也没有 Google/Spring AI 模型自动配置，不需要加载 Google 凭据或模型名；服务配置、Qdrant 与其它导入的顺序和值保持。已经运行的进程须受控重启新制品后再核对，源码变更不表示旧进程已卸载凭据。真实密钥、数据库密码及 Qdrant 密钥只放 Nacos 或环境变量，不进入仓库。
 
 ## DDL
 
@@ -139,7 +147,7 @@ bash scripts/check-secrets.sh
 
 ## 本批可观测性接入
 
-当前服务版本为 `1.1.2`，公共能力精确消费 `com:utils:1.6.2`，并由公共包传递引入轻量 `com:fleet-observability:0.1.2` 的安全 HTTP 终态事件。公共制品先完成 Maven Local 验证，再按对应 main 确定提交发布远端；目标环境的实际采集与全链读回单独验收。九服务共享 `actuator.yaml` 暴露 health/info/prometheus；除 health 外仍要求 `actuatorReq` 运维令牌，空值或错误值失败关闭。`logging.yml` 使用 ECS 固定字段白名单，未知 MDC、原始消息、正文和异常不进入采集结果；OTel agent 标准 `trace_id/span_id` 与业务会话 ID 分开。应用指标带固定 application/environment 标签，禁止动态业务 ID。
+当前服务版本为 `1.1.3`，公共能力精确消费 `com:utils:1.6.2`，并由公共包传递引入轻量 `com:fleet-observability:0.1.2` 的安全 HTTP 终态事件。公共制品先完成 Maven Local 验证，再按对应 main 确定提交发布远端；目标环境的实际采集与全链读回单独验收。九服务共享 `actuator.yaml` 暴露 health/info/prometheus；除 health 外仍要求 `actuatorReq` 运维令牌，空值或错误值失败关闭。`logging.yml` 使用 ECS 固定字段白名单，未知 MDC、原始消息、正文和异常不进入采集结果；OTel agent 标准 `trace_id/span_id` 与业务会话 ID 分开。应用指标带固定 application/environment 标签，禁止动态业务 ID。
 
 Admin/Zipkin 模板与三 profile 的 imports 已退役。服务 JVM 的可选 OTel agent 由统一启动入口负责，不通过全局 JAVA_TOOL_OPTIONS 注入 Gradle 或测试。部署时 Java 指标只由 Micrometer Prometheus 提供，OTEL_METRICS_EXPORTER 与 OTEL_LOGS_EXPORTER 均为 none；监控组件、配置发布和实际采集仍须独立验证。回滚须恢复匹配的制品与配置，先恢复旧 dataId 再回退旧消费者，不能用已删除的配置项假装完成回滚。
 
@@ -149,6 +157,6 @@ Admin/Zipkin 模板与三 profile 的 imports 已退役。服务 JVM 的可选 O
 
 ## PostgreSQL 启动修复补丁
 
-当前服务补丁版本为 `1.1.2`，公共依赖精确固定 `com:utils:1.6.2`，接入 PostgreSQL/Druid 超时单位修复及事务化、失败即拒绝启动的 DDL 执行。原定连接 3 秒、读取 30 秒预算保持，RPC 契约 `com:rpc-api:1.0.7` 与轻量采集库 `com:fleet-observability:0.1.2` 保持。公共制品、Jar 构建、服务器与 IDEA 原生启动须分别验证，修改依赖不代表目标环境已恢复。
+PostgreSQL 启动修复补丁版本为 `1.1.2`，公共依赖精确固定 `com:utils:1.6.2`，接入 PostgreSQL/Druid 超时单位修复及事务化、失败即拒绝启动的 DDL 执行。原定连接 3 秒、读取 30 秒预算保持，RPC 契约 `com:rpc-api:1.0.7` 与轻量采集库 `com:fleet-observability:0.1.2` 保持。公共制品、Jar 构建、服务器与 IDEA 原生启动须分别验证，修改依赖不代表目标环境已恢复。
 
 本次公共观测补丁通过 `com:utils:1.6.2` 精确传递 `com:fleet-observability:0.1.2`，修复 Servlet Security 在 ERROR 分派中再次拒绝导致终态缺失的问题；认证和错误响应保持。源码与测试通过后，目标进程和追踪/日志联结仍须单独读回验收。
