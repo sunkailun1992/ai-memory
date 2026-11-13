@@ -1,4 +1,4 @@
-FROM registry.cn-hangzhou.aliyuncs.com/gongbaowang/jre-env:8u241
-COPY ai-memory-1.0.0.jar /app/
+FROM eclipse-temurin:21-jre
+COPY build/libs/ai-memory.jar /app/ai-memory.jar
 WORKDIR /app/
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["java", "-jar", "/app/ai-memory.jar"]

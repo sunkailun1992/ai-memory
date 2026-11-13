@@ -3,7 +3,7 @@ package com.kellen.database;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
-import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
+import com.baomidou.mybatisplus.spring.MybatisSqlSessionFactoryBean;
 import com.kellen.memory.mapper.MemoryShortMessageMapper;
 import com.kellen.memory.mapper.MemoryShortSummaryMapper;
 import com.kellen.memory.mapper.MemoryVectorTaskMapper;
