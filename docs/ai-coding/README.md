@@ -6,7 +6,7 @@
 
 ## 通用规则入口
 
-先核对 `BRANCHING_SPEC.md` 的 main/test/preprod、完整功能交付与清理保护，再按 `VERSIONING_SPEC.md` 做版本进位和已用制品核对；安全关键改动须有独立风险验证，Review 是补充。纯规范变更不提升业务版本、不机械重跑 Java 测试。
+先核对 `BRANCHING_SPEC.md` 的 main 保护、完整功能交付与清理，再按 `VERSIONING_SPEC.md` 做版本进位和已用制品核对；安全关键改动须有独立风险验证，Review 是补充。纯规范变更不提升业务版本、不机械重跑 Java 测试。
 
 ## 快速阅读
 
@@ -26,13 +26,13 @@
 - `ai-memory` 是记忆控制面和权威数据面。
 - `ai`、`ai-agent` 不能绕过 `ai-memory` 直接写记忆表或 Qdrant。
 - 短记忆是会话窗口 + 滚动摘要，不使用 Qdrant 做主存。
-- 长记忆是患者级事实，MySQL 是权威库，Qdrant 是可重建派生索引。
+- 长记忆是患者级事实，PostgreSQL 是权威库，Qdrant 是可重建派生索引。
 - Redis 只做缓存、锁和短 TTL 协调，不做权威库。
 - `rag` 负责公共知识库，不保存患者个人记忆。
 - `ai` 负责登录、患者选择、问卷状态机和展示历史。
 - `ai-agent` 负责模型执行，可以调用 `ai-memory` 召回或提交候选记忆，但不能直接落最终事实。
 - 所有记忆召回都必须有患者、来源租户、调用方、用途、权限和 token/条数边界。
-- 所有删除、归档、脱敏都必须覆盖 MySQL、Qdrant 派生索引、Redis 缓存和未执行任务。
+- 所有删除、归档、脱敏都必须覆盖 PostgreSQL、Qdrant 派生索引、Redis 缓存和未执行任务。
 
 ## 目录结构
 

@@ -2,7 +2,7 @@
 
 ## 通用修改入口
 
-先按根 `AGENTS.md`、`BRANCHING_SPEC.md` 核对仓库、WIP、最新 main 与任务授权；版本按 `VERSIONING_SPEC.md` 做进位和占用检查。main/test/preprod 的集成证据、远端核对、短分支清理与 worktree 保护分别记录；纯文档不重复跑 Java 测试或额外提升制品版本。
+先按根 `AGENTS.md`、`BRANCHING_SPEC.md` 核对仓库、WIP、最新 main 与任务授权；版本按 `VERSIONING_SPEC.md` 做进位和占用检查。main 的集成证据、远端核对、短分支清理与 worktree 保护分别记录；纯文档不重复跑 Java 测试或额外提升制品版本。
 
 ## 执行顺序
 
@@ -21,7 +21,7 @@
 
 ## 编码原则
 
-- MySQL 是记忆权威库；Qdrant 是长期记忆派生索引；Redis 是缓存和锁。
+- PostgreSQL 是记忆权威库；Qdrant 是长期记忆派生索引；Redis 是缓存和锁。
 - 短期记忆采用会话窗口 + 滚动摘要，不能用 Qdrant 替代。
 - 长期记忆按 `patientId + sourceTenantId` 隔离。
 - `ai-agent` 提交的是候选记忆，最终是否入库由 `ai-memory` 策略决定。
@@ -47,7 +47,7 @@
 
 ## 禁止事项
 
-- 禁止绕过 `ai-memory` 让 `ai-agent` 直连 MySQL/Qdrant。
+- 禁止绕过 `ai-memory` 让 `ai-agent` 直连 PostgreSQL/Qdrant。
 - 禁止把 Qdrant 当作唯一事实存储。
 - 禁止用 Qdrant 存短记忆主上下文。
 - 禁止把患者长期记忆混入 `rag` 公共知识库。

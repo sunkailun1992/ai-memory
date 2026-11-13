@@ -6,7 +6,7 @@
 
 当前仓库从现有 Java 微服务骨架复制初始化，已保留 Spring Boot、Nacos、Dubbo、MyBatis-Plus、Gradle、CI、脚本和完整 AI 编程规范。当前版本已提供短期记忆、长期候选写入、召回、治理、Qdrant 派生索引任务和 Dubbo/HTTP 调用入口。
 
-代码分支使用 `main`（正式主干）、`test`（整合测试）、`preprod`（候选预发）与短功能分支。分支不自动改变运行 profile；完整功能进入远端 main 并核对后，按本任务授权清理本地与远程功能分支，保护未合、其他 worktree 占用及长期分支。细则见 [分支管理规范](docs/ai-coding/BRANCHING_SPEC.md)。
+代码分支只保留 `main`（正式主干）与短功能分支。分支不自动改变运行 profile；完整功能进入远端 main 并核对后，按本任务授权清理本地与远程功能分支，保护未合、其他 worktree 占用及长期分支。细则见 [分支管理规范](docs/ai-coding/BRANCHING_SPEC.md)。
 
 ## 启动入口
 

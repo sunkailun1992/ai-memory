@@ -10,8 +10,8 @@
 
 - 记忆写入策略为什么接受、拒绝或进入待确认。
 - 召回为什么限制条数、token、用途或字段。
-- 删除、归档、脱敏为什么要同步 MySQL、Qdrant、Redis 和任务队列。
-- Qdrant 命中后为什么还要回查 MySQL。
+- 删除、归档、脱敏为什么要同步 PostgreSQL、Qdrant、Redis 和任务队列。
+- Qdrant 命中后为什么还要回查 PostgreSQL。
 - Redis key 为什么包含租户、患者、会话或用途。
 - 跨服务 RPC 为什么需要调用方、患者、来源租户和 purpose。
 

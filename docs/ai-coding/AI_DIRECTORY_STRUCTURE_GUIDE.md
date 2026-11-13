@@ -39,7 +39,7 @@ src/test/java/com/kellen/
 |---|---|
 | `memory/controller` | HTTP 管理、调试、OpenAPI 入口 |
 | `memory/rpc` | Dubbo provider/consumer，契约必须来自 `../rpc-api` |
-| `memory/entity` | MySQL 权威实体 |
+| `memory/entity` | PostgreSQL 权威实体 |
 | `memory/entity/bo` | 写入请求对象 |
 | `memory/entity/query` | 查询请求对象 |
 | `memory/entity/vo` | HTTP 响应视图对象 |

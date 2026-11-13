@@ -19,7 +19,7 @@
 | 记忆候选写入 | `ai-memory` | `ai-agent` 可提交候选，最终入库由本服务判定 |
 | 记忆召回 | `ai-memory` | 按授权、患者、租户、用途和 token 限制返回上下文 |
 | 公共知识库 RAG | `rag` | 医学指南、FAQ、产品文档、知识切片 |
-| Qdrant 长记忆索引 | `ai-memory` | 仅派生索引，可由 MySQL 重建 |
+| Qdrant 长记忆索引 | `ai-memory` | 仅派生索引，可由 PostgreSQL 重建 |
 | Qdrant 知识库索引 | `rag` | 公共知识库索引，不混入患者个人记忆 |
 
 ## 短期记忆
@@ -36,7 +36,7 @@
 
 可以使用：
 
-- MySQL 保存窗口和摘要。
+- PostgreSQL 保存窗口和摘要。
 - Redis 缓存热点会话短摘要。
 
 禁止：
@@ -54,8 +54,8 @@
 - 以 `patientId + sourceTenantId` 隔离。
 - 保存来源、来源业务 ID、置信度、发生时间、写入时间、状态、授权范围。
 - 支持 upsert、归档、撤销、删除、脱敏。
-- MySQL 是权威库。
-- Qdrant 是派生索引，必须可从 MySQL 重建。
+- PostgreSQL 是权威库。
+- Qdrant 是派生索引，必须可从 PostgreSQL 重建。
 
 典型类型：
 
@@ -69,7 +69,7 @@
 
 - 把未经确认的模型推测直接写成事实。
 - 把公共医学知识写入患者长期记忆。
-- 删除 MySQL 事实后保留可召回的 Qdrant point。
+- 删除 PostgreSQL 事实后保留可召回的 Qdrant point。
 
 ## 候选记忆写入
 
@@ -117,7 +117,7 @@
 - 默认最小必要原则。
 - 默认不返回完整敏感明文。
 - 删除/归档/撤销的记忆不得召回。
-- Qdrant 命中后必须回查 MySQL 权威状态。
+- Qdrant 命中后必须回查 PostgreSQL 权威状态。
 
 ## Qdrant 规范
 
@@ -127,9 +127,9 @@ Qdrant 只做长期记忆语义索引，不做权威存储。
 
 - collection 维度和 embedding 模型一致。
 - point payload 不保存不可恢复的唯一事实。
-- point ID 可追溯到 MySQL 记忆 ID。
+- point ID 可追溯到 PostgreSQL 记忆 ID。
 - 索引失败不阻断主链路。
-- MySQL 删除、归档、脱敏后必须同步删除或更新 point。
+- PostgreSQL 删除、归档、脱敏后必须同步删除或更新 point。
 
 短期记忆不走 Qdrant。
 
@@ -170,7 +170,7 @@ Redis key 必须包含服务前缀、环境、租户、患者或会话 ID，避�
 
 删除必须覆盖：
 
-- MySQL 权威事实。
+- PostgreSQL 权威事实。
 - Qdrant 派生 point。
 - Redis 缓存。
 - 异步任务队列中未执行的索引任务。
