@@ -26,7 +26,7 @@
 - 项目类型：AI 记忆服务后端，为 `ai`、`ai-agent` 和后续中台智能体统一提供短期记忆、长期记忆、召回、候选写入、删除、归档、脱敏、授权和审计能力。
 - 技术栈：Java 21、Spring Boot 4、Spring Cloud Alibaba、Nacos、Dubbo、MyBatis-Plus、Gradle、`com:utils`、`com:rpc-api`。
 - 后续中间件：PostgreSQL 权威存储、Redis 缓存/锁、Qdrant 长期记忆派生语义索引、RabbitMQ 异步索引；Conductor OSS 独立任务编排（业务 REST 接入另行验收）。
-- Utils 制品隔离：本 GitHub 个人项目固定使用 `com:utils:1.6.8`；公司项目使用 `com.kellen:utils`。二者共用私有 Maven 地址，以 group 区分制品；Java 包名 `com.kellen.*` 不随 Maven group 改动。
+- Utils 制品隔离：本 GitHub 个人项目固定使用 `com:utils:1.6.9`；公司项目使用 `com.kellen:utils`。二者共用私有 Maven 地址，以 group 区分制品；Java 包名 `com.kellen.*` 不随 Maven group 改动。
 - 同级依赖：`../rpc-api` 提供跨服务 RPC 接口和 DTO 契约；`../utils` 提供公共响应、认证上下文、租户、多数据源和基础工具；`../ai` 是业务入口；`../ai-agent` 是模型执行层；`../rag` 是公共知识检索服务。
 - 当前状态：从现有微服务工程骨架复制初始化，已保留基础工程、配置入口、CI、脚本和 AI 编码规范；真实记忆表、RPC 契约、Qdrant 索引和 ai-agent 直连调用尚未实现。
 
@@ -60,7 +60,7 @@
 - 记忆写入、召回、删除、归档、脱敏、授权、Qdrant 索引、Redis 缓存和跨服务 RPC 默认中高风险。
 - 新增或修改功能前，必须确认该功能属于 `ai-memory`，而不是 `ai`、`ai-agent` 或 `rag`。
 - 完成后必须说明：权限边界、租户隔离、患者隔离、脱敏策略、审计字段、失败降级、测试证据和回滚方式。
-- 修改 DDL 前必须确认 `ddl_history`；已执行或无法确认执行状态的脚本禁止原地修改，必须追加新 SQL。
+- 表结构只由本服务 `src/main/resources/db/migration` 的 Flyway 迁移管理；已提交的迁移文件不修改，改结构只新增 `V<下一个>__<说明>.sql`；新库保持空库，由服务首次启动时的 Flyway 建表，不手工执行任何公共脚本。
 - 测试必须稳定可重复，按 `docs/ai-coding/TESTING_SPEC.md`「测试稳定性」：不依赖时序、连接复用或执行顺序；偶发失败按缺陷处理，不用重试、跳过或删除测试掩盖。
 
 ## 验证命令

@@ -1,43 +1,68 @@
--- PostgreSQL 18 业务结构。历史 MySQL 脚本保留，不在 PostgreSQL 启动时执行。
--- 先以对应业务角色执行 utils 的 db/postgresql/common-infra-schema.sql，再执行本文件。
--- ICU 主级比较保留大小写、重音不敏感的常用匹配；迁移前另查唯一键碰撞与尾空格。
--- MySQL ON UPDATE 时间由应用显式更新；不创建 Seata AT 不支持的数据库触发器。
-CREATE COLLATION IF NOT EXISTS public.fleet_general_ci (provider = icu, locale = 'und-u-ks-level1', deterministic = false);
+-- ai-memory 服务 V1 基线：现有表结构快照，只在空库上执行；
+-- 已有库由 Flyway baseline 登记为版本 1，不执行本文件。Seata AT 的 undo_log 定义沿用 Apache Seata v2.6.0 PostgreSQL 脚本。
 
+-- Seata AT 回滚日志表。
+CREATE TABLE IF NOT EXISTS undo_log (
+    id SERIAL NOT NULL,
+    branch_id BIGINT NOT NULL,
+    xid VARCHAR(128) NOT NULL,
+    context VARCHAR(128) NOT NULL,
+    rollback_info BYTEA NOT NULL,
+    log_status INT NOT NULL,
+    log_created TIMESTAMP(6) NOT NULL,
+    log_modified TIMESTAMP(6) NOT NULL,
+    CONSTRAINT pk_undo_log PRIMARY KEY (id),
+    CONSTRAINT ux_undo_log UNIQUE (xid, branch_id)
+);
+CREATE INDEX IF NOT EXISTS ix_log_created ON undo_log(log_created);
+COMMENT ON TABLE undo_log IS 'AT transaction mode undo table';
+COMMENT ON COLUMN undo_log.branch_id IS 'branch transaction id';
+COMMENT ON COLUMN undo_log.xid IS 'global transaction id';
+COMMENT ON COLUMN undo_log.context IS 'undo_log context,such as serialization';
+COMMENT ON COLUMN undo_log.rollback_info IS 'rollback info';
+COMMENT ON COLUMN undo_log.log_status IS '0:normal status,1:defense status';
+COMMENT ON COLUMN undo_log.log_created IS 'create datetime';
+COMMENT ON COLUMN undo_log.log_modified IS 'modify datetime';
+
+-- 业务表结构（PostgreSQL 18）。ICU 主级比较：大小写、重音不敏感的常用匹配。
+-- 更新时间由应用显式写入；不创建 Seata AT 不支持的数据库触发器。
+CREATE COLLATION IF NOT EXISTS fleet_general_ci (provider = icu, locale = 'und-u-ks-level1', deterministic = false);
+
+-- AI 候选记忆写入：建表、索引与列注释。
 CREATE TABLE IF NOT EXISTS ai_memory_candidate (
-    id varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    caller varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    purpose varchar(128) COLLATE public.fleet_general_ci,
-    trace_id varchar(128) COLLATE public.fleet_general_ci,
-    user_id varchar(64) COLLATE public.fleet_general_ci,
-    tenant_id varchar(64) COLLATE public.fleet_general_ci NOT NULL DEFAULT '100',
-    source_tenant_id varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    patient_id varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    conversation_id varchar(128) COLLATE public.fleet_general_ci,
-    source_type varchar(64) COLLATE public.fleet_general_ci,
-    source_id varchar(128) COLLATE public.fleet_general_ci,
-    memory_type varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    memory_key varchar(160) COLLATE public.fleet_general_ci NOT NULL,
-    title varchar(255) COLLATE public.fleet_general_ci,
-    content text COLLATE public.fleet_general_ci NOT NULL,
-    facts_json text COLLATE public.fleet_general_ci,
+    id varchar(64) COLLATE fleet_general_ci NOT NULL,
+    caller varchar(64) COLLATE fleet_general_ci NOT NULL,
+    purpose varchar(128) COLLATE fleet_general_ci,
+    trace_id varchar(128) COLLATE fleet_general_ci,
+    user_id varchar(64) COLLATE fleet_general_ci,
+    tenant_id varchar(64) COLLATE fleet_general_ci NOT NULL DEFAULT '100',
+    source_tenant_id varchar(64) COLLATE fleet_general_ci NOT NULL,
+    patient_id varchar(64) COLLATE fleet_general_ci NOT NULL,
+    conversation_id varchar(128) COLLATE fleet_general_ci,
+    source_type varchar(64) COLLATE fleet_general_ci,
+    source_id varchar(128) COLLATE fleet_general_ci,
+    memory_type varchar(64) COLLATE fleet_general_ci NOT NULL,
+    memory_key varchar(160) COLLATE fleet_general_ci NOT NULL,
+    title varchar(255) COLLATE fleet_general_ci,
+    content text COLLATE fleet_general_ci NOT NULL,
+    facts_json text COLLATE fleet_general_ci,
     confidence double precision NOT NULL DEFAULT 0,
     requires_human_review boolean NOT NULL DEFAULT false,
-    sensitivity_level varchar(32) COLLATE public.fleet_general_ci NOT NULL DEFAULT 'NORMAL',
-    authorization_scope varchar(128) COLLATE public.fleet_general_ci,
-    review_status varchar(32) COLLATE public.fleet_general_ci NOT NULL DEFAULT 'PENDING',
-    rejection_reason varchar(500) COLLATE public.fleet_general_ci,
-    promoted_memory_id varchar(64) COLLATE public.fleet_general_ci,
+    sensitivity_level varchar(32) COLLATE fleet_general_ci NOT NULL DEFAULT 'NORMAL',
+    authorization_scope varchar(128) COLLATE fleet_general_ci,
+    review_status varchar(32) COLLATE fleet_general_ci NOT NULL DEFAULT 'PENDING',
+    rejection_reason varchar(500) COLLATE fleet_general_ci,
+    promoted_memory_id varchar(64) COLLATE fleet_general_ci,
     occurred_at timestamp(0) without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     reviewed_at timestamp(0) without time zone,
-    code varchar(255) COLLATE public.fleet_general_ci,
-    description varchar(255) COLLATE public.fleet_general_ci,
+    code varchar(255) COLLATE fleet_general_ci,
+    description varchar(255) COLLATE fleet_general_ci,
     create_date_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
-    create_name varchar(255) COLLATE public.fleet_general_ci,
+    create_name varchar(255) COLLATE fleet_general_ci,
     modify_date_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
-    modify_name varchar(255) COLLATE public.fleet_general_ci,
+    modify_name varchar(255) COLLATE fleet_general_ci,
     is_delete boolean DEFAULT false,
-    label varchar(255) COLLATE public.fleet_general_ci,
+    label varchar(255) COLLATE fleet_general_ci,
     sorting integer DEFAULT 0,
     version integer DEFAULT 1,
     PRIMARY KEY (id)
@@ -82,29 +107,30 @@ COMMENT ON COLUMN ai_memory_candidate.label IS '标签';
 COMMENT ON COLUMN ai_memory_candidate.sorting IS '排序';
 COMMENT ON COLUMN ai_memory_candidate.version IS '版本号';
 
+-- AI 记忆审计事件：建表、索引与列注释。
 CREATE TABLE IF NOT EXISTS ai_memory_event (
-    id varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    operation varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    target_type varchar(64) COLLATE public.fleet_general_ci,
-    target_id varchar(128) COLLATE public.fleet_general_ci,
-    caller varchar(64) COLLATE public.fleet_general_ci,
-    purpose varchar(128) COLLATE public.fleet_general_ci,
-    trace_id varchar(128) COLLATE public.fleet_general_ci,
-    user_id varchar(64) COLLATE public.fleet_general_ci,
-    tenant_id varchar(64) COLLATE public.fleet_general_ci NOT NULL DEFAULT '100',
-    source_tenant_id varchar(64) COLLATE public.fleet_general_ci,
-    patient_id varchar(64) COLLATE public.fleet_general_ci,
-    reason varchar(500) COLLATE public.fleet_general_ci,
-    result varchar(64) COLLATE public.fleet_general_ci,
-    detail_json text COLLATE public.fleet_general_ci,
-    code varchar(255) COLLATE public.fleet_general_ci,
-    description varchar(255) COLLATE public.fleet_general_ci,
+    id varchar(64) COLLATE fleet_general_ci NOT NULL,
+    operation varchar(64) COLLATE fleet_general_ci NOT NULL,
+    target_type varchar(64) COLLATE fleet_general_ci,
+    target_id varchar(128) COLLATE fleet_general_ci,
+    caller varchar(64) COLLATE fleet_general_ci,
+    purpose varchar(128) COLLATE fleet_general_ci,
+    trace_id varchar(128) COLLATE fleet_general_ci,
+    user_id varchar(64) COLLATE fleet_general_ci,
+    tenant_id varchar(64) COLLATE fleet_general_ci NOT NULL DEFAULT '100',
+    source_tenant_id varchar(64) COLLATE fleet_general_ci,
+    patient_id varchar(64) COLLATE fleet_general_ci,
+    reason varchar(500) COLLATE fleet_general_ci,
+    result varchar(64) COLLATE fleet_general_ci,
+    detail_json text COLLATE fleet_general_ci,
+    code varchar(255) COLLATE fleet_general_ci,
+    description varchar(255) COLLATE fleet_general_ci,
     create_date_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
-    create_name varchar(255) COLLATE public.fleet_general_ci,
+    create_name varchar(255) COLLATE fleet_general_ci,
     modify_date_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
-    modify_name varchar(255) COLLATE public.fleet_general_ci,
+    modify_name varchar(255) COLLATE fleet_general_ci,
     is_delete boolean DEFAULT false,
-    label varchar(255) COLLATE public.fleet_general_ci,
+    label varchar(255) COLLATE fleet_general_ci,
     sorting integer DEFAULT 0,
     version integer DEFAULT 1,
     PRIMARY KEY (id)
@@ -138,40 +164,41 @@ COMMENT ON COLUMN ai_memory_event.label IS '标签';
 COMMENT ON COLUMN ai_memory_event.sorting IS '排序';
 COMMENT ON COLUMN ai_memory_event.version IS '版本号';
 
+-- AI 患者长期记忆权威事实：建表、索引与列注释。
 CREATE TABLE IF NOT EXISTS ai_memory_long_fact (
-    id varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    patient_id varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    source_tenant_id varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    memory_type varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    memory_key varchar(160) COLLATE public.fleet_general_ci NOT NULL,
-    title varchar(255) COLLATE public.fleet_general_ci NOT NULL,
-    content text COLLATE public.fleet_general_ci NOT NULL,
-    facts_json text COLLATE public.fleet_general_ci,
-    source_type varchar(64) COLLATE public.fleet_general_ci,
-    source_id varchar(128) COLLATE public.fleet_general_ci,
+    id varchar(64) COLLATE fleet_general_ci NOT NULL,
+    patient_id varchar(64) COLLATE fleet_general_ci NOT NULL,
+    source_tenant_id varchar(64) COLLATE fleet_general_ci NOT NULL,
+    memory_type varchar(64) COLLATE fleet_general_ci NOT NULL,
+    memory_key varchar(160) COLLATE fleet_general_ci NOT NULL,
+    title varchar(255) COLLATE fleet_general_ci NOT NULL,
+    content text COLLATE fleet_general_ci NOT NULL,
+    facts_json text COLLATE fleet_general_ci,
+    source_type varchar(64) COLLATE fleet_general_ci,
+    source_id varchar(128) COLLATE fleet_general_ci,
     confidence double precision NOT NULL DEFAULT 0,
-    status varchar(32) COLLATE public.fleet_general_ci NOT NULL DEFAULT 'ACTIVE',
-    sensitivity_level varchar(32) COLLATE public.fleet_general_ci NOT NULL DEFAULT 'NORMAL',
-    authorization_scope varchar(128) COLLATE public.fleet_general_ci,
-    embedding_status varchar(32) COLLATE public.fleet_general_ci NOT NULL DEFAULT 'PENDING',
-    vector_collection varchar(128) COLLATE public.fleet_general_ci,
-    vector_id varchar(128) COLLATE public.fleet_general_ci,
+    status varchar(32) COLLATE fleet_general_ci NOT NULL DEFAULT 'ACTIVE',
+    sensitivity_level varchar(32) COLLATE fleet_general_ci NOT NULL DEFAULT 'NORMAL',
+    authorization_scope varchar(128) COLLATE fleet_general_ci,
+    embedding_status varchar(32) COLLATE fleet_general_ci NOT NULL DEFAULT 'PENDING',
+    vector_collection varchar(128) COLLATE fleet_general_ci,
+    vector_id varchar(128) COLLATE fleet_general_ci,
     indexed_at timestamp(0) without time zone,
     occurred_at timestamp(0) without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     archived_at timestamp(0) without time zone,
     masked_at timestamp(0) without time zone,
     deleted_at timestamp(0) without time zone,
-    code varchar(255) COLLATE public.fleet_general_ci,
-    description varchar(255) COLLATE public.fleet_general_ci,
+    code varchar(255) COLLATE fleet_general_ci,
+    description varchar(255) COLLATE fleet_general_ci,
     create_date_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
-    create_name varchar(255) COLLATE public.fleet_general_ci,
+    create_name varchar(255) COLLATE fleet_general_ci,
     modify_date_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
-    modify_name varchar(255) COLLATE public.fleet_general_ci,
+    modify_name varchar(255) COLLATE fleet_general_ci,
     is_delete boolean DEFAULT false,
-    label varchar(255) COLLATE public.fleet_general_ci,
+    label varchar(255) COLLATE fleet_general_ci,
     sorting integer DEFAULT 0,
     version integer DEFAULT 1,
-    tenant_id varchar(64) COLLATE public.fleet_general_ci NOT NULL DEFAULT '100',
+    tenant_id varchar(64) COLLATE fleet_general_ci NOT NULL DEFAULT '100',
     PRIMARY KEY (id)
 );
 CREATE INDEX IF NOT EXISTS idx_ai_memory_long_fact_embedding ON ai_memory_long_fact (embedding_status, modify_date_time);
@@ -213,15 +240,16 @@ COMMENT ON COLUMN ai_memory_long_fact.sorting IS '排序';
 COMMENT ON COLUMN ai_memory_long_fact.version IS '版本号';
 COMMENT ON COLUMN ai_memory_long_fact.tenant_id IS 'Kellen 内部租户ID';
 
+-- AI 记忆召回评估记录：建表、索引与列注释。
 CREATE TABLE IF NOT EXISTS ai_memory_retrieval_eval (
-    id varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    trace_id varchar(128) COLLATE public.fleet_general_ci,
-    caller varchar(64) COLLATE public.fleet_general_ci,
-    purpose varchar(128) COLLATE public.fleet_general_ci,
-    source_tenant_id varchar(64) COLLATE public.fleet_general_ci,
-    patient_id varchar(64) COLLATE public.fleet_general_ci,
-    conversation_id varchar(128) COLLATE public.fleet_general_ci,
-    query_text varchar(1000) COLLATE public.fleet_general_ci,
+    id varchar(64) COLLATE fleet_general_ci NOT NULL,
+    trace_id varchar(128) COLLATE fleet_general_ci,
+    caller varchar(64) COLLATE fleet_general_ci,
+    purpose varchar(128) COLLATE fleet_general_ci,
+    source_tenant_id varchar(64) COLLATE fleet_general_ci,
+    patient_id varchar(64) COLLATE fleet_general_ci,
+    conversation_id varchar(128) COLLATE fleet_general_ci,
+    query_text varchar(1000) COLLATE fleet_general_ci,
     max_items integer,
     max_tokens integer,
     short_hit_count integer NOT NULL DEFAULT 0,
@@ -229,18 +257,18 @@ CREATE TABLE IF NOT EXISTS ai_memory_retrieval_eval (
     vector_hit_count integer NOT NULL DEFAULT 0,
     returned_count integer NOT NULL DEFAULT 0,
     latency_ms bigint NOT NULL DEFAULT 0,
-    result_message varchar(1000) COLLATE public.fleet_general_ci,
-    code varchar(255) COLLATE public.fleet_general_ci,
-    description varchar(255) COLLATE public.fleet_general_ci,
+    result_message varchar(1000) COLLATE fleet_general_ci,
+    code varchar(255) COLLATE fleet_general_ci,
+    description varchar(255) COLLATE fleet_general_ci,
     create_date_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
-    create_name varchar(255) COLLATE public.fleet_general_ci,
+    create_name varchar(255) COLLATE fleet_general_ci,
     modify_date_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
-    modify_name varchar(255) COLLATE public.fleet_general_ci,
+    modify_name varchar(255) COLLATE fleet_general_ci,
     is_delete boolean DEFAULT false,
-    label varchar(255) COLLATE public.fleet_general_ci,
+    label varchar(255) COLLATE fleet_general_ci,
     sorting integer DEFAULT 0,
     version integer DEFAULT 1,
-    tenant_id varchar(64) COLLATE public.fleet_general_ci NOT NULL DEFAULT '100',
+    tenant_id varchar(64) COLLATE fleet_general_ci NOT NULL DEFAULT '100',
     PRIMARY KEY (id)
 );
 CREATE INDEX IF NOT EXISTS idx_ai_memory_retrieval_eval_caller ON ai_memory_retrieval_eval (caller, purpose, create_date_time);
@@ -275,28 +303,29 @@ COMMENT ON COLUMN ai_memory_retrieval_eval.sorting IS '排序';
 COMMENT ON COLUMN ai_memory_retrieval_eval.version IS '版本号';
 COMMENT ON COLUMN ai_memory_retrieval_eval.tenant_id IS 'Kellen 内部租户ID';
 
+-- AI 短期会话记忆窗口：建表、索引与列注释。
 CREATE TABLE IF NOT EXISTS ai_memory_short_message (
-    id varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    conversation_id varchar(128) COLLATE public.fleet_general_ci NOT NULL,
-    source_tenant_id varchar(64) COLLATE public.fleet_general_ci,
-    patient_id varchar(64) COLLATE public.fleet_general_ci,
-    user_id varchar(64) COLLATE public.fleet_general_ci,
-    caller varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    message_role varchar(24) COLLATE public.fleet_general_ci NOT NULL,
-    content text COLLATE public.fleet_general_ci NOT NULL,
+    id varchar(64) COLLATE fleet_general_ci NOT NULL,
+    conversation_id varchar(128) COLLATE fleet_general_ci NOT NULL,
+    source_tenant_id varchar(64) COLLATE fleet_general_ci,
+    patient_id varchar(64) COLLATE fleet_general_ci,
+    user_id varchar(64) COLLATE fleet_general_ci,
+    caller varchar(64) COLLATE fleet_general_ci NOT NULL,
+    message_role varchar(24) COLLATE fleet_general_ci NOT NULL,
+    content text COLLATE fleet_general_ci NOT NULL,
     token_estimate integer,
     occurred_at timestamp(0) without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    code varchar(255) COLLATE public.fleet_general_ci,
-    description varchar(255) COLLATE public.fleet_general_ci,
+    code varchar(255) COLLATE fleet_general_ci,
+    description varchar(255) COLLATE fleet_general_ci,
     create_date_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
-    create_name varchar(255) COLLATE public.fleet_general_ci,
+    create_name varchar(255) COLLATE fleet_general_ci,
     modify_date_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
-    modify_name varchar(255) COLLATE public.fleet_general_ci,
+    modify_name varchar(255) COLLATE fleet_general_ci,
     is_delete boolean DEFAULT false,
-    label varchar(255) COLLATE public.fleet_general_ci,
+    label varchar(255) COLLATE fleet_general_ci,
     sorting integer DEFAULT 0,
     version integer DEFAULT 1,
-    tenant_id varchar(64) COLLATE public.fleet_general_ci NOT NULL DEFAULT '100',
+    tenant_id varchar(64) COLLATE fleet_general_ci NOT NULL DEFAULT '100',
     PRIMARY KEY (id)
 );
 CREATE INDEX IF NOT EXISTS idx_ai_memory_short_message_conversation_time ON ai_memory_short_message (conversation_id, occurred_at);
@@ -324,25 +353,26 @@ COMMENT ON COLUMN ai_memory_short_message.sorting IS '排序';
 COMMENT ON COLUMN ai_memory_short_message.version IS '版本号';
 COMMENT ON COLUMN ai_memory_short_message.tenant_id IS 'Kellen 内部租户ID';
 
+-- AI 短期会话滚动摘要：建表、索引与列注释。
 CREATE TABLE IF NOT EXISTS ai_memory_short_summary (
-    id varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    conversation_id varchar(128) COLLATE public.fleet_general_ci NOT NULL,
-    source_tenant_id varchar(64) COLLATE public.fleet_general_ci,
-    patient_id varchar(64) COLLATE public.fleet_general_ci,
-    summary_text text COLLATE public.fleet_general_ci NOT NULL,
+    id varchar(64) COLLATE fleet_general_ci NOT NULL,
+    conversation_id varchar(128) COLLATE fleet_general_ci NOT NULL,
+    source_tenant_id varchar(64) COLLATE fleet_general_ci,
+    patient_id varchar(64) COLLATE fleet_general_ci,
+    summary_text text COLLATE fleet_general_ci NOT NULL,
     summary_version integer NOT NULL DEFAULT 1,
     summarized_at timestamp(0) without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    code varchar(255) COLLATE public.fleet_general_ci,
-    description varchar(255) COLLATE public.fleet_general_ci,
+    code varchar(255) COLLATE fleet_general_ci,
+    description varchar(255) COLLATE fleet_general_ci,
     create_date_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
-    create_name varchar(255) COLLATE public.fleet_general_ci,
+    create_name varchar(255) COLLATE fleet_general_ci,
     modify_date_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
-    modify_name varchar(255) COLLATE public.fleet_general_ci,
+    modify_name varchar(255) COLLATE fleet_general_ci,
     is_delete boolean DEFAULT false,
-    label varchar(255) COLLATE public.fleet_general_ci,
+    label varchar(255) COLLATE fleet_general_ci,
     sorting integer DEFAULT 0,
     version integer DEFAULT 1,
-    tenant_id varchar(64) COLLATE public.fleet_general_ci NOT NULL DEFAULT '100',
+    tenant_id varchar(64) COLLATE fleet_general_ci NOT NULL DEFAULT '100',
     PRIMARY KEY (id)
 );
 CREATE INDEX IF NOT EXISTS idx_ai_memory_short_summary_patient ON ai_memory_short_summary (patient_id, source_tenant_id, summarized_at);
@@ -367,30 +397,31 @@ COMMENT ON COLUMN ai_memory_short_summary.sorting IS '排序';
 COMMENT ON COLUMN ai_memory_short_summary.version IS '版本号';
 COMMENT ON COLUMN ai_memory_short_summary.tenant_id IS 'Kellen 内部租户ID';
 
+-- AI 记忆 Qdrant 派生索引任务：建表、索引与列注释。
 CREATE TABLE IF NOT EXISTS ai_memory_vector_task (
-    id varchar(64) COLLATE public.fleet_general_ci NOT NULL,
-    task_type varchar(32) COLLATE public.fleet_general_ci NOT NULL,
-    memory_id varchar(64) COLLATE public.fleet_general_ci,
-    patient_id varchar(64) COLLATE public.fleet_general_ci,
-    source_tenant_id varchar(64) COLLATE public.fleet_general_ci,
-    collection_name varchar(128) COLLATE public.fleet_general_ci,
-    vector_id varchar(128) COLLATE public.fleet_general_ci,
-    payload_json text COLLATE public.fleet_general_ci,
-    status varchar(32) COLLATE public.fleet_general_ci NOT NULL DEFAULT 'PENDING',
+    id varchar(64) COLLATE fleet_general_ci NOT NULL,
+    task_type varchar(32) COLLATE fleet_general_ci NOT NULL,
+    memory_id varchar(64) COLLATE fleet_general_ci,
+    patient_id varchar(64) COLLATE fleet_general_ci,
+    source_tenant_id varchar(64) COLLATE fleet_general_ci,
+    collection_name varchar(128) COLLATE fleet_general_ci,
+    vector_id varchar(128) COLLATE fleet_general_ci,
+    payload_json text COLLATE fleet_general_ci,
+    status varchar(32) COLLATE fleet_general_ci NOT NULL DEFAULT 'PENDING',
     attempts integer NOT NULL DEFAULT 0,
     next_retry_at timestamp(0) without time zone,
-    error_message varchar(1000) COLLATE public.fleet_general_ci,
-    code varchar(255) COLLATE public.fleet_general_ci,
-    description varchar(255) COLLATE public.fleet_general_ci,
+    error_message varchar(1000) COLLATE fleet_general_ci,
+    code varchar(255) COLLATE fleet_general_ci,
+    description varchar(255) COLLATE fleet_general_ci,
     create_date_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
-    create_name varchar(255) COLLATE public.fleet_general_ci,
+    create_name varchar(255) COLLATE fleet_general_ci,
     modify_date_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
-    modify_name varchar(255) COLLATE public.fleet_general_ci,
+    modify_name varchar(255) COLLATE fleet_general_ci,
     is_delete boolean DEFAULT false,
-    label varchar(255) COLLATE public.fleet_general_ci,
+    label varchar(255) COLLATE fleet_general_ci,
     sorting integer DEFAULT 0,
     version integer DEFAULT 1,
-    tenant_id varchar(64) COLLATE public.fleet_general_ci NOT NULL DEFAULT '100',
+    tenant_id varchar(64) COLLATE fleet_general_ci NOT NULL DEFAULT '100',
     PRIMARY KEY (id)
 );
 CREATE INDEX IF NOT EXISTS idx_ai_memory_vector_task_memory ON ai_memory_vector_task (memory_id, status);

@@ -17,7 +17,7 @@ public interface MemoryVectorTaskMapper extends MemoryBaseMapper<MemoryVectorTas
         update(null, new UpdateWrapper<MemoryVectorTaskEntity>()
                 .eq("memory_id", memoryId)
                 .eq("status", MemoryVectorTaskStatusEnum.PENDING.code())
-                .set("modify_date_time", LocalDateTime.now())
+                .set("update_time", LocalDateTime.now())
                 .set("status", MemoryVectorTaskStatusEnum.CANCELLED.code()));
     }
 }

@@ -168,7 +168,7 @@ public class DefaultMemoryRetrievalService implements MemoryRetrievalService {
         item.setStatus(memory.getStatus());
         item.setHitSource("MYSQL_LONG_MEMORY");
         item.setOccurredAt(memory.getOccurredAt());
-        item.setUpdatedAt(memory.getModifyDateTime());
+        item.setUpdatedAt(memory.getUpdateTime());
         return item;
     }
 

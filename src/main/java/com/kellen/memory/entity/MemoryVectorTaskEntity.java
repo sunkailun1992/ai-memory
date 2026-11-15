@@ -1,7 +1,6 @@
 package com.kellen.memory.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.kellen.entity.EntityBase;
 import com.kellen.memory.entity.enums.MemoryVectorTaskStatusEnum;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +13,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @TableName("ai_memory_vector_task")
-public class MemoryVectorTaskEntity extends EntityBase {
+public class MemoryVectorTaskEntity extends MemoryEntity {
 
     private String taskType;
 

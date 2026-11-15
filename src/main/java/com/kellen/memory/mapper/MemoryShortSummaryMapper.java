@@ -23,7 +23,7 @@ public interface MemoryShortSummaryMapper extends MemoryBaseMapper<MemoryShortSu
         // 批量更新没有实体填充回调；显式维护原有软删和修改时间语义。
         update(null, new UpdateWrapper<MemoryShortSummaryEntity>()
                 .eq("conversation_id", conversationId)
-                .set("is_delete", true)
-                .set("modify_date_time", LocalDateTime.now()));
+                .set("is_deleted", true)
+                .set("update_time", LocalDateTime.now()));
     }
 }

@@ -2,7 +2,7 @@
 
 `ai-memory` 是 Kellen AI 体系的独立记忆服务，负责统一管理短期记忆、长期记忆、候选记忆写入、召回、删除、归档、脱敏、授权和审计边界。
 
-个人公共包固定为 `com:utils:1.6.8`，跨服务契约固定为 `com:rpc-api:1.0.9`。个人与公司共用私有 Maven 地址，utils 分别使用 `com` 与 `com.kellen` group 隔离；Java 包名保持 `com.kellen.*`。
+个人公共包固定为 `com:utils:1.6.9`，跨服务契约固定为 `com:rpc-api:1.0.9`。个人与公司共用私有 Maven 地址，utils 分别使用 `com` 与 `com.kellen` group 隔离；Java 包名保持 `com.kellen.*`。
 
 当前仓库从现有 Java 微服务骨架复制初始化，已保留 Spring Boot、Nacos、Dubbo、MyBatis-Plus、Gradle、CI、脚本和完整 AI 编程规范。当前版本已提供短期记忆、长期候选写入、召回、治理、Qdrant 派生索引任务和 Dubbo/HTTP 调用入口。
 
@@ -107,18 +107,20 @@ local-canary.yaml
 
 ## DDL
 
-PostgreSQL 使用 `postgresql.*` / `postgresql-gray.*` 连接键与 `org.postgresql.Driver`，不回退到旧 MySQL 键。字符字段使用 ICU `fleet_general_ci` 保留常用大小写、重音不敏感的等值、唯一键和 `LIKE` 查询；这不等于完整复刻 MySQL Unicode 权重或尾空格规则，迁移前必须检查唯一键碰撞和尾空格。PG 18 的 nondeterministic collation 支持 `LIKE`，不要将现有查询改成不支持该排序规则的 `ILIKE` 或正则匹配。
+PostgreSQL 数据源用 dynamic-datasource 原生配置：`application.yml` 的 `spring.datasource.dynamic` 块放连接池与 Seata 参数，Nacos 的 `spring.datasource.dynamic.datasource.master/gray` 放地址与账号，驱动为 `org.postgresql.Driver`；JDBC URL 不带 `connectTimeout`、`socketTimeout`。字符字段使用 ICU `fleet_general_ci` 保留常用大小写、重音不敏感的等值、唯一键和 `LIKE` 查询；这不等于完整复刻 MySQL Unicode 权重或尾空格规则，迁移前必须检查唯一键碰撞和尾空格。PG 18 的 nondeterministic collation 支持 `LIKE`，不要将现有查询改成不支持该排序规则的 `ILIKE` 或正则匹配。
 
 真实 PG 结构回归通过受控进程环境提供 `FLEET_PG_TEST_URL`、`FLEET_PG_TEST_USERNAME`、`FLEET_PG_TEST_PASSWORD`；只允许 `fleet_pg_test_` 前缀的独立测试库，测试只创建并清理随机 schema。未提供时明确跳过，H2 回归不能代替 PostgreSQL 验收。凭据不得写进命令文本、仓库或测试报告。
 
-当前 `PostgresqlDdl#getSqlFiles()` 会自动执行：
+表结构只由本服务的 Flyway 迁移维护：
 
 ```text
-db/postgresql/common-infra-schema.sql
-db/postgresql/ai-memory-schema.sql
+src/main/resources/db/migration/V1__baseline.sql             现有结构快照，只在空库执行
+src/main/resources/db/migration/V2__drop_ddl_history.sql     删除旧 DDL 方式的执行记录表
+src/main/resources/db/migration/V3__rename_audit_columns.sql 审计列按实体基类改名
+src/main/resources/db/migration/V4__drop_unused_columns.sql  删除没人读写的 code、description、label、sorting，删前逐列核对为空
 ```
 
-该脚本包含：
+迁移后的表：
 
 - `ai_memory_short_summary`：短期会话摘要。
 - `ai_memory_short_message`：短期原文窗口。
@@ -128,7 +130,7 @@ db/postgresql/ai-memory-schema.sql
 - `ai_memory_vector_task`：Qdrant 索引同步任务。
 - `ai_memory_retrieval_eval`：召回评估记录。
 
-空业务库必须在首次启动前先执行 `../utils/src/main/resources/db/postgresql/common-infra-schema.sql`，再执行业务结构。历史 MySQL 初始化脚本保留，不在 PostgreSQL 上执行。
+表结构只由本服务 `src/main/resources/db/migration` 的 Flyway 迁移管理；已提交的迁移文件不修改，改结构只新增 `V<下一个>__<说明>.sql`；新库保持空库，由服务首次启动时的 Flyway 建表，不手工执行任何公共脚本。已有的库由 `baseline-on-migrate` 把版本 1 登记为基线、不执行 V1，再执行 V2 起的迁移。Seata AT 的 `undo_log` 在 `V1__baseline.sql` 里；数据源块的 `spring.datasource.dynamic.seata` 跟随 `seata.enabled`，启用 Seata 前库里须已完成迁移。
 
 ## 验证命令
 

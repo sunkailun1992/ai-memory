@@ -1,7 +1,6 @@
 package com.kellen.memory.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.kellen.entity.EntityBase;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,7 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @TableName("ai_memory_short_message")
-public class MemoryShortMessageEntity extends EntityBase {
+public class MemoryShortMessageEntity extends MemoryEntity {
 
     private String conversationId;
 

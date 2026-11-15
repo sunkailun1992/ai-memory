@@ -1,7 +1,7 @@
 package com.kellen.memory.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.kellen.entity.EntityBase;
+import com.kellen.memory.entity.MemoryEntity;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
@@ -12,7 +12,7 @@ import java.util.Optional;
  *
  * @param <T> 实体类型。
  */
-public interface MemoryBaseMapper<T extends EntityBase> extends BaseMapper<T> {
+public interface MemoryBaseMapper<T extends MemoryEntity> extends BaseMapper<T> {
 
     /**
      * 插入或按主键更新实体。
