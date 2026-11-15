@@ -2,7 +2,7 @@
 
 `ai-memory` 是 Kellen AI 体系的独立记忆服务，负责统一管理短期记忆、长期记忆、候选记忆写入、召回、删除、归档、脱敏、授权和审计边界。
 
-个人公共包固定为 `com:utils:1.6.7`，跨服务契约固定为 `com:rpc-api:1.0.9`。个人与公司共用私有 Maven 地址，utils 分别使用 `com` 与 `com.kellen` group 隔离；Java 包名保持 `com.kellen.*`。
+个人公共包固定为 `com:utils:1.6.8`，跨服务契约固定为 `com:rpc-api:1.0.9`。个人与公司共用私有 Maven 地址，utils 分别使用 `com` 与 `com.kellen` group 隔离；Java 包名保持 `com.kellen.*`。
 
 当前仓库从现有 Java 微服务骨架复制初始化，已保留 Spring Boot、Nacos、Dubbo、MyBatis-Plus、Gradle、CI、脚本和完整 AI 编程规范。当前版本已提供短期记忆、长期候选写入、召回、治理、Qdrant 派生索引任务和 Dubbo/HTTP 调用入口。
 
@@ -96,14 +96,11 @@ security-jwt.yaml
 security-auth.yaml
 swagger.yaml
 ai-memory-spring.yaml
-qdrant.yaml
 mybatis-plus.yaml
 redis.yaml
-rabbitmq.yaml
-elasticsearch.yaml
 seata.yaml
 dubbo.yaml
-a2a.yaml
+local-canary.yaml
 ```
 
 `1.1.3` 移除三个 profile 对 `ai-model-secrets.yaml` 的导入。记忆服务不执行模型推理，其运行依赖也没有 Google/Spring AI 模型自动配置，不需要加载 Google 凭据或模型名；服务配置、Qdrant 与其它导入的顺序和值保持。已经运行的进程须受控重启新制品后再核对，源码变更不表示旧进程已卸载凭据。真实密钥、数据库密码及 Qdrant 密钥只放 Nacos 或环境变量，不进入仓库。
