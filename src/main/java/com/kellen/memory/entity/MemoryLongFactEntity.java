@@ -1,5 +1,6 @@
 package com.kellen.memory.entity;
 
+import com.kellen.entity.TenantEntityBase;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.kellen.memory.entity.enums.MemorySensitivityLevelEnum;
 import com.kellen.memory.entity.enums.MemoryStatusEnum;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @TableName("ai_memory_long_fact")
-public class MemoryLongFactEntity extends MemoryEntity {
+public class MemoryLongFactEntity extends TenantEntityBase {
 
     private String patientId;
 

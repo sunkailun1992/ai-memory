@@ -182,14 +182,15 @@ src/main/resources/db/migration/V<版本>__<说明>.sql
 规则：
 
 - 表结构只由本服务 `src/main/resources/db/migration` 的 Flyway 迁移管理；已提交的迁移文件不修改，改结构只新增 `V<下一个>__<说明>.sql`；新库保持空库，由服务首次启动时的 Flyway 建表，不手工执行任何公共脚本。
-- Seata AT 的 `undo_log` 在 `V1__baseline.sql` 里；数据源块的 `spring.datasource.dynamic.seata` 跟随 `seata.enabled`，Seata 开启时数据源创建阶段（早于 Flyway）就会检查该表，所以启用 Seata 前库里须已完成迁移。
+- Seata AT 的 `undo_log` 在 `V1__baseline.sql` 里；数据源块固定 `spring.datasource.dynamic.seata: true`，不设总开关；建池时 Seata AT 代理就检查该表，utils 在创建任何 Bean 之前先执行 Flyway 迁移，新空库首次启动即建出该表。
 - 已有的库由 `baseline-on-migrate: true`、`baseline-version: 1` 接管：版本 1 登记为基线、不执行 `V1__baseline.sql`。
 - 初始化数据也写进迁移；补数据用 `INSERT ... ON CONFLICT DO NOTHING` 或带租户、主键条件的确定性 `UPDATE`。
-- 删列、删表的迁移先在 `DO` 块里核对整列（或整表）为空，不为空就 `RAISE EXCEPTION` 让整版回滚。
+- 不删除实体基类对应的列（`id`、`code`、`description`、审计列、`is_deleted`、`label`、`sorting`、`version`、`tenant_id`、`create_dept`），旧列只改名；删其它列或整表的迁移先在 `DO` 块里核对整列（或整表）为空，不为空就 `RAISE EXCEPTION` 让整版回滚。
 - 不再为基础数据新增业务初始化接口，避免启动后还需要人工调用初始化接口。
-- 表结构必须包含 `version`，乐观锁字段由 `MemoryEntity`（`TenantEntityBase` 加 `id`、`version`） 的 `@Version` 承接。
+- 表结构必须包含 `version`，乐观锁字段由 utils `EntityBase` 的 `@Version` 承接。
 - 多租户业务表必须包含 `tenant_id`，业务 SQL 不手写租户条件。
 - 需要参与数据权限的业务主表默认包含 `owner_user_id` 和 `dept_id`：`owner_user_id` 表示数据负责人或归属用户，`dept_id` 表示数据归属部门。
+- 所有租户表都有 `create_dept`（创建部门，插入时自动填）；要按部门过滤的表在 `security.data-permission.table-rules` 里开启，规则指向 `create_dept` 或本表业务含义的部门列。
 - `owner_user_id` 不要求无脑加到所有表；租户表、权限资源表、字典表、登录/初始化类配置表、纯关系表通常不加，除非业务明确需要按负责人过滤。
 - 关系表优先通过主表做权限控制，例如用户角色、角色资源、角色数据范围这类关系表不要为了统一字段而强行补 `owner_user_id`。
 
@@ -201,18 +202,23 @@ src/main/resources/db/migration/V<版本>__<说明>.sql
 
 ```sql
 id varchar(64) COLLATE fleet_general_ci NOT NULL, -- 主键（字符串雪花ID）
+code varchar(255) COLLATE fleet_general_ci DEFAULT NULL, -- 编码
+description varchar(255) COLLATE fleet_general_ci DEFAULT NULL, -- 说明
 create_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP, -- 创建时间
-update_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP, -- 更新时间
 creator varchar(255) COLLATE fleet_general_ci DEFAULT NULL, -- 创建人
+update_time timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP, -- 更新时间
 updater varchar(255) COLLATE fleet_general_ci DEFAULT NULL, -- 更新人
 is_deleted boolean DEFAULT false, -- 删除状态
 type int DEFAULT '0', -- 类型（0：默认）
 state int DEFAULT '1', -- 状态（1：启用，2：禁用）
+label varchar(255) COLLATE fleet_general_ci DEFAULT NULL, -- 标签
+sorting int DEFAULT '0', -- 排序
 version int DEFAULT '1', -- 版本号（乐观锁）
-tenant_id varchar(64) COLLATE fleet_general_ci NOT NULL -- 租户id
+tenant_id varchar(64) COLLATE fleet_general_ci NOT NULL, -- 租户id
+create_dept varchar(64) COLLATE fleet_general_ci DEFAULT NULL -- 创建部门ID
 ```
 
-`code`、`description`、`sorting` 按业务需要添加，不再使用 `label`。`createTime`、`updateTime`、`creator`、`updater`、`deleted` 由 `utils` 的 `com.kellen.entity.EntityBase` 承接并自动填充（创建人、修改人取当前登录用户ID，没有登录用户时不填），`tenantId` 由 `TenantEntityBase` 承接；`id`、`version` 及用到的 `code`、`description`、`sorting`、`type`、`state` 由本服务实体声明（`MemoryEntity`（`TenantEntityBase` 加 `id`、`version`））。
+`id`、`code`、`description`、`createTime`、`creator`、`updateTime`、`updater`、`deleted`、`label`、`sorting`、`version` 由 `utils` 的 `com.kellen.entity.EntityBase` 承接（时间、创建人、修改人自动填充，创建人、修改人取当前登录用户ID，没有登录用户时不填），`tenantId` 与 `createDept`（插入时取当前登录用户的部门）由 `TenantEntityBase` 承接；本服务实体直接继承 `TenantEntityBase`。
 
 `type` 和 `state` 不放入 utils 的实体基类。业务代码需要读写 `type/state` 时，由当前实体自行声明字段并配套 `IEnum` 或受控枚举；不需要读写时依赖数据库默认值即可。
 

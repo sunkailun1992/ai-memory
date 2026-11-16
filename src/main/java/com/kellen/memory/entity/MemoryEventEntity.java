@@ -1,5 +1,6 @@
 package com.kellen.memory.entity;
 
+import com.kellen.entity.TenantEntityBase;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +11,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @TableName("ai_memory_event")
-public class MemoryEventEntity extends MemoryEntity {
+public class MemoryEventEntity extends TenantEntityBase {
 
     private String operation;
 
@@ -25,8 +26,6 @@ public class MemoryEventEntity extends MemoryEntity {
     private String traceId;
 
     private String userId;
-
-    private String tenantId;
 
     private String sourceTenantId;
 

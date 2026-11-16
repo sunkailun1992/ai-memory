@@ -2,7 +2,7 @@
 
 `ai-memory` 是 Kellen AI 体系的独立记忆服务，负责统一管理短期记忆、长期记忆、候选记忆写入、召回、删除、归档、脱敏、授权和审计边界。
 
-个人公共包固定为 `com:utils:1.6.9`，跨服务契约固定为 `com:rpc-api:1.0.9`。个人与公司共用私有 Maven 地址，utils 分别使用 `com` 与 `com.kellen` group 隔离；Java 包名保持 `com.kellen.*`。
+个人公共包固定为 `com:utils:1.7.0`，跨服务契约固定为 `com:rpc-api:1.0.9`。个人与公司共用私有 Maven 地址，utils 分别使用 `com` 与 `com.kellen` group 隔离；Java 包名保持 `com.kellen.*`。
 
 当前仓库从现有 Java 微服务骨架复制初始化，已保留 Spring Boot、Nacos、Dubbo、MyBatis-Plus、Gradle、CI、脚本和完整 AI 编程规范。当前版本已提供短期记忆、长期候选写入、召回、治理、Qdrant 派生索引任务和 Dubbo/HTTP 调用入口。
 
@@ -117,7 +117,7 @@ PostgreSQL 数据源用 dynamic-datasource 原生配置：`application.yml` 的 
 src/main/resources/db/migration/V1__baseline.sql             现有结构快照，只在空库执行
 src/main/resources/db/migration/V2__drop_ddl_history.sql     删除旧 DDL 方式的执行记录表
 src/main/resources/db/migration/V3__rename_audit_columns.sql 审计列按实体基类改名
-src/main/resources/db/migration/V4__drop_unused_columns.sql  删除没人读写的 code、description、label、sorting，删前逐列核对为空
+src/main/resources/db/migration/V4__add_create_dept.sql      租户表新增创建部门列 create_dept
 ```
 
 迁移后的表：
@@ -130,7 +130,7 @@ src/main/resources/db/migration/V4__drop_unused_columns.sql  删除没人读写�
 - `ai_memory_vector_task`：Qdrant 索引同步任务。
 - `ai_memory_retrieval_eval`：召回评估记录。
 
-表结构只由本服务 `src/main/resources/db/migration` 的 Flyway 迁移管理；已提交的迁移文件不修改，改结构只新增 `V<下一个>__<说明>.sql`；新库保持空库，由服务首次启动时的 Flyway 建表，不手工执行任何公共脚本。已有的库由 `baseline-on-migrate` 把版本 1 登记为基线、不执行 V1，再执行 V2 起的迁移。Seata AT 的 `undo_log` 在 `V1__baseline.sql` 里；数据源块的 `spring.datasource.dynamic.seata` 跟随 `seata.enabled`，启用 Seata 前库里须已完成迁移。
+表结构只由本服务 `src/main/resources/db/migration` 的 Flyway 迁移管理；已提交的迁移文件不修改，改结构只新增 `V<下一个>__<说明>.sql`；新库保持空库，由服务首次启动时的 Flyway 建表，不手工执行任何公共脚本。已有的库由 `baseline-on-migrate` 把版本 1 登记为基线、不执行 V1，再执行 V2 起的迁移。Seata AT 的 `undo_log` 在 `V1__baseline.sql` 里；数据源块固定 `spring.datasource.dynamic.seata: true`，新空库由 utils 在建池之前先执行 Flyway 建出该表。
 
 ## 验证命令
 

@@ -1,5 +1,6 @@
 package com.kellen.memory.entity;
 
+import com.kellen.entity.TenantEntityBase;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +11,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @TableName("ai_memory_retrieval_eval")
-public class MemoryRetrievalEvalEntity extends MemoryEntity {
+public class MemoryRetrievalEvalEntity extends TenantEntityBase {
 
     private String traceId;
 

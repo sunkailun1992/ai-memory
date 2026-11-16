@@ -1,5 +1,6 @@
 package com.kellen.memory.entity;
 
+import com.kellen.entity.TenantEntityBase;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.kellen.memory.entity.enums.MemoryCandidateStatusEnum;
 import lombok.Getter;
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @TableName("ai_memory_candidate")
-public class MemoryCandidateEntity extends MemoryEntity {
+public class MemoryCandidateEntity extends TenantEntityBase {
 
     private String caller;
 
@@ -22,8 +23,6 @@ public class MemoryCandidateEntity extends MemoryEntity {
     private String traceId;
 
     private String userId;
-
-    private String tenantId;
 
     private String sourceTenantId;
 
