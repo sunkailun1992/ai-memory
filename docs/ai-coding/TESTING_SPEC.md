@@ -20,7 +20,7 @@
 
 ## 外部依赖
 
-- 普通单元测试不得依赖真实 Nacos、PostgreSQL、Redis、Qdrant、RabbitMQ 或外部模型。
+- 普通单元测试不得依赖真实 Nacos、PostgreSQL、Redis、Qdrant、RocketMQ 或外部模型。
 - Qdrant/Redis 集成测试必须使用 fake、testcontainer、测试 profile 或显式开关。
 - 依赖真实环境的验证必须在交付说明中标明。
 

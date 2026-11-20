@@ -9,7 +9,7 @@
 ## 推荐模式
 
 - Policy：写入策略、召回策略、脱敏策略、授权策略。
-- Adapter：Qdrant、Redis、RabbitMQ、外部 RPC 适配。
+- Adapter：Qdrant、Redis、RocketMQ、外部 RPC 适配。
 - Pipeline：候选记忆从提交到入库的校验流水线。
 - State：候选记忆、长期记忆、索引任务状态转换。
 - Observer/Event：删除、归档、脱敏后触发缓存清理和索引同步。

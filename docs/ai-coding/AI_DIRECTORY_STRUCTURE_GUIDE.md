@@ -58,4 +58,4 @@ src/test/java/com/kellen/
 - 不在本仓库复制 `rpc-api` DTO 或接口。
 - 不在本仓库复制 `utils` 公共源码。
 - 记忆领域按技术分层组织；当某类能力持续膨胀且跨层改动频繁时，再评估按 feature 分包。
-- 新增 Qdrant、Redis、RabbitMQ 适配代码时优先放在明确的 adapter/policy/job 边界内，不散落在 Controller。
+- 新增 Qdrant、Redis、RocketMQ 适配代码时优先放在明确的 adapter/policy/job 边界内，不散落在 Controller。
