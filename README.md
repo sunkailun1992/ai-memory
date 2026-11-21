@@ -2,7 +2,7 @@
 
 `ai-memory` 是 Kellen AI 体系的独立记忆服务，负责统一管理短期记忆、长期记忆、候选记忆写入、召回、删除、归档、脱敏、授权和审计边界。
 
-个人公共包固定为 `com:utils:2.0.3`，跨服务契约固定为 `com:rpc-api:2.0.0`。个人与公司共用私有 Maven 地址，utils 分别使用 `com` 与 `com.kellen` group 隔离；Java 包名保持 `com.kellen.*`。
+个人公共包固定为 `com:utils:2.0.5`，跨服务契约固定为 `com:rpc-api:2.0.0`。个人与公司共用私有 Maven 地址，utils 分别使用 `com` 与 `com.kellen` group 隔离；Java 包名保持 `com.kellen.*`。
 
 当前仓库从现有 Java 微服务骨架复制初始化，已保留 Spring Boot、Nacos、Dubbo、MyBatis-Plus、Gradle、CI、脚本和完整 AI 编程规范。当前版本已提供短期记忆、长期候选写入、召回、治理、Qdrant 派生索引任务和 Dubbo/HTTP 调用入口。
 
@@ -164,3 +164,5 @@ PostgreSQL 启动修复补丁版本为 `1.1.2`，公共依赖精确固定 `com:u
 `1.1.7` 将公共依赖升到 `com:utils:1.6.7`：修复 Dubbo 上下文透传过滤器拿不到 Spring 绑定的灰度与租户配置（提供方误拒全部灰度授权、灰度实例不带授权也放行、自定义租户头名不生效），本服务代码不变。
 
 `1.3.0` 为第5阶段（不兼容）：入站认证换成 Keycloak。`com:utils` 升到 `2.0.3`，服务成为标准资源服务器（只收 RS256、Keycloak 签发方、受众 `github-api`，业务上下文经 user 服务取得），三套 profile 不再导入 `security-jwt.yaml`，`com:rpc-api` 升到 `2.0.0`。Dubbo 提供的记忆接口不受影响。
+
+`1.3.1` 将 `com:utils` 升到 `2.0.5`，修复业务上下文的 Dubbo 引用：此前 utils 把引用写成资源服务器自动配置里的嵌套配置，本服务主类在 `com.kellen` 包、默认组件扫描覆盖 utils，嵌套配置被提前当作普通配置处理，早于 `@EnableDubbo` 登记引用注解处理器，引用建不出来，所有用户令牌都按“用户不存在”返回 401（2.0.4 改为单独的自动配置，只由 imports 文件加载）；引用与本服务其他 Dubbo 引用一样在启动时不初始化（2.0.5，`init = false`），第一次需要业务上下文的请求才初始化并连接。本服务代码不变。
