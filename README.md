@@ -2,7 +2,7 @@
 
 `ai-memory` 是 Kellen AI 体系的独立记忆服务，负责统一管理短期记忆、长期记忆、候选记忆写入、召回、删除、归档、脱敏、授权和审计边界。
 
-个人公共包固定为 `com:utils:2.0.6`，跨服务契约固定为 `com:rpc-api:2.0.0`。个人与公司共用私有 Maven 地址，utils 分别使用 `com` 与 `com.kellen` group 隔离；Java 包名保持 `com.kellen.*`。
+个人公共包固定为 `com:utils:2.0.8`，跨服务契约固定为 `com:rpc-api:2.0.0`。个人与公司共用私有 Maven 地址，utils 分别使用 `com` 与 `com.kellen` group 隔离；Java 包名保持 `com.kellen.*`。
 
 当前仓库从现有 Java 微服务骨架复制初始化，已保留 Spring Boot、Nacos、Dubbo、MyBatis-Plus、Gradle、CI、脚本和完整 AI 编程规范。当前版本已提供短期记忆、长期候选写入、召回、治理、Qdrant 派生索引任务和 Dubbo/HTTP 调用入口。
 
@@ -170,3 +170,5 @@ PostgreSQL 启动修复补丁版本为 `1.1.2`，公共依赖精确固定 `com:u
 `1.3.2` 去掉 dev、test、prod 三套配置里 Nacos 账号与口令的默认值（原为 `nacos`，即 Nacos 管理员账号）：`custom.nacos-username`、`custom.nacos-password` 只引用 `GITHUB_NACOS_USERNAME`、`GITHUB_NACOS_PASSWORD`，缺值时启动即失败，不再静默以管理员登录（CWE-1392 默认凭据）；值由私有环境提供（IDEA 的 env 文件、Jar 的 application.properties 或容器同名环境变量）。
 
 `1.3.3` 将 `com:utils` 升到 `2.0.6`：服务没配受众时只收受众含 `github-api` 的令牌（落实“受众默认 github-api”，漏配不再变成不校验受众）；本服务的 Nacos 配置照旧显式写受众，行为不变。
+
+`1.3.4` 将 `com:utils` 升到 `2.0.8`（第 5 阶段推迟的小问题）：令牌有效但 user 里没有该用户时由 401 改 403「账号未开通」，网关 BFF 不再反复重新登录；资源服务器核对令牌的 `user_id` 属于它的 `sub`（OIDC Core §5.7），不一致回 403；`iat` 必须有且不能晚于当前时间 60 秒以上；没有业务上下文提供方时启动失败。测试改用 utils 发布的测试夹具 `FakeIssuer`（`com:utils:2.0.8:test-fixtures`），不再自带副本。

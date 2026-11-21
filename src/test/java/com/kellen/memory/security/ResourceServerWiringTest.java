@@ -2,7 +2,7 @@ package com.kellen.memory.security;
 
 import com.kellen.memory.controller.MemoryCapabilityController;
 import com.kellen.memory.service.MemoryCapabilityService;
-import com.kellen.memory.support.FakeIssuer;
+import com.kellen.security.oauth2.test.FakeIssuer;
 import com.kellen.security.SecurityUser;
 import com.kellen.security.oauth2.FleetResourceServerAutoConfiguration;
 import com.kellen.security.oauth2.SecurityContextResult;
