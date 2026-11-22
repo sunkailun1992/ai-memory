@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** 7 个记忆实体直接继承租户基类，基类已有的公共字段（含 id、version、code、description、label、sorting）不在实体里重复声明。 */
+/** 7 个记忆实体直接继承租户基类，基类已有的公共字段（含 id、version、code、description、label、sort）不在实体里重复声明。 */
 class EntityBaseFieldsTest {
 
     static final List<Class<? extends TenantEntityBase>> ENTITIES = List.of(MemoryCandidateEntity.class, MemoryEventEntity.class, MemoryLongFactEntity.class, MemoryRetrievalEvalEntity.class, MemoryShortMessageEntity.class, MemoryShortSummaryEntity.class, MemoryVectorTaskEntity.class);

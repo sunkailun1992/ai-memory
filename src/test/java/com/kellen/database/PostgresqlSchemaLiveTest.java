@@ -26,7 +26,7 @@ class PostgresqlSchemaLiveTest extends PostgresqlSchemaFixture {
 
     /** 每张表都必须有的全部基础字段；undo_log 与 Flyway 记录表是框架表，除外。 */
     private static final List<String> BASE_COLUMNS = List.of("id", "code", "description", "create_time", "create_by",
-            "update_time", "update_by", "is_deleted", "label", "sorting", "version", "tenant_id", "create_dept");
+            "update_time", "update_by", "is_deleted", "label", "sort", "version", "tenant_id", "create_dept");
 
     @Test
     void everyTableHasAllBaseColumns() throws Exception {
@@ -41,16 +41,24 @@ class PostgresqlSchemaLiveTest extends PostgresqlSchemaFixture {
     }
 
     @Test
+    void noTableKeepsSortingColumn() throws Exception {
+        // 第6阶段第三部分把排序列 sorting 改名 sort（V6）；迁移后本 schema 里不能再有 sorting 列。
+        migrate(null);
+        assertThat(number("SELECT count(*) FROM information_schema.columns WHERE table_schema = '" + schema
+                + "' AND column_name = 'sorting'")).isZero();
+    }
+
+    @Test
     void migratesEmptySchemaToLatestVersion() throws Exception {
         assertThat(migrate(null).success).isTrue();
-        assertThat(appliedVersions()).containsExactly("1", "2", "3", "4", "5");
+        assertThat(appliedVersions()).containsExactly("1", "2", "3", "4", "5", "6");
         assertThat(strings("SELECT table_name FROM information_schema.tables WHERE table_schema = '" + schema
                 + "' AND table_type = 'BASE TABLE' AND table_name NOT IN ('undo_log', 'flyway_schema_history') ORDER BY 1"))
                 .containsExactlyElementsOf(TABLES);
         for (String table : TABLES) {
             assertThat(columns(table)).as(table)
                     .contains("id", "code", "description", "create_time", "create_by", "update_time", "update_by", "is_deleted",
-                            "label", "sorting", "version", "tenant_id", "create_dept")
+                            "label", "sort", "version", "tenant_id", "create_dept")
                     .doesNotContain("create_date_time", "modify_date_time", "create_name", "modify_name", "is_delete", "creator", "updater");
         }
         assertThat(number("SELECT count(*) FROM information_schema.columns WHERE table_schema = '" + schema
@@ -67,8 +75,8 @@ class PostgresqlSchemaLiveTest extends PostgresqlSchemaFixture {
         migrate("3");
         execute("INSERT INTO ai_memory_short_summary(id, conversation_id, summary_text, label, sorting) VALUES ('fixture-kept', 'fixture-conversation', 'synthetic', 'kept', 7)");
         migrate(null);
-        assertThat(appliedVersions()).containsExactly("1", "2", "3", "4", "5");
-        assertThat(number("SELECT count(*) FROM ai_memory_short_summary WHERE id = 'fixture-kept' AND label = 'kept' AND sorting = 7"
+        assertThat(appliedVersions()).containsExactly("1", "2", "3", "4", "5", "6");
+        assertThat(number("SELECT count(*) FROM ai_memory_short_summary WHERE id = 'fixture-kept' AND label = 'kept' AND sort = 7"
                 + " AND create_dept IS NULL")).isEqualTo(1);
         assertThat(strings("SELECT col_description(('" + schema + ".ai_memory_short_summary')::regclass, ordinal_position::int)"
                 + " FROM information_schema.columns WHERE table_schema = '" + schema
